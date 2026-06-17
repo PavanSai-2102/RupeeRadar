@@ -1,0 +1,25 @@
+# Environments
+venv/
+env/
+.env
+__pycache__/
+*.pyc
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Node modules are covered by frontend/.gitignore, but just in case
+node_modules/
+
+# Mac OS
+.DS_Store
+
+# Temporary files
+scratch_test*.py
+test_client*.py
+test_pdf.py
+test_upload.py
+sample_statement.csv
+sample_*.csv
