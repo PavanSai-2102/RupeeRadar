@@ -23,3 +23,7 @@ test_pdf.py
 test_upload.py
 sample_statement.csv
 sample_*.csv
+uvicorn.log
+database.db
+__pycache__/
+.env

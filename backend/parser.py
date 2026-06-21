@@ -13,9 +13,9 @@ def _standardize_dataframe(df: pd.DataFrame) -> list[dict]:
     date_cols = ['date', 'transaction date', 'value date', 'txn date']
     desc_cols = ['description', 'narration', 'particulars', 'remarks']
     
-    # Identify which columns we actually have
-    date_col = next((c for c in date_cols if c in df.columns), None)
-    desc_col = next((c for c in desc_cols if c in df.columns), None)
+    # Identify which columns we actually have (using substring matching)
+    date_col = next((c for c in df.columns if any(k in c for k in date_cols)), None)
+    desc_col = next((c for c in df.columns if any(k in c for k in desc_cols)), None)
     
     if not date_col or not desc_col:
         raise ValueError("Could not find required Date or Description columns in CSV.")
@@ -36,32 +36,49 @@ def _standardize_dataframe(df: pd.DataFrame) -> list[dict]:
         if is_empty_date and (not desc_val or desc_val.lower() == "nan" or desc_val.lower() == "none"):
             continue
 
+        # Helper to clean amount strings
+        def clean_amount(val):
+            v = str(val).replace(',', '').replace('₹', '').replace('Rs.', '').replace('Rs', '').strip()
+            try:
+                return float(v)
+            except:
+                return 0.0
+
         # Determine Amount and Type (Credit/Debit)
         amount = 0.0
         txn_type = "UNKNOWN"
 
         # Case 1: Single Amount column + Type column
-        if 'amount' in df.columns and 'type' in df.columns:
-            amount = abs(float(str(row['amount']).replace(',', ''))) if pd.notna(row['amount']) else 0.0
-            txn_type = "CREDIT" if str(row['type']).strip().upper() in ['CR', 'CREDIT', 'C'] else "DEBIT"
+        if any('amount' in c for c in df.columns) and any('type' in c for c in df.columns):
+            a_col = next(c for c in df.columns if 'amount' in c)
+            t_col = next(c for c in df.columns if 'type' in c)
+            amount = abs(clean_amount(row[a_col])) if pd.notna(row[a_col]) else 0.0
+            txn_type = "CREDIT" if str(row[t_col]).strip().upper() in ['CR', 'CREDIT', 'C'] else "DEBIT"
         
         # Case 2: Separate Debit and Credit columns (common in Indian banks)
         else:
-            withdrawal_cols = ['withdrawal', 'debit', 'dr', 'withdrawals']
-            deposit_cols = ['deposit', 'credit', 'cr', 'deposits']
+            withdrawal_cols = ['withdrawal', 'debit', 'dr']
+            deposit_cols = ['deposit', 'credit', 'cr']
             
-            w_col = next((c for c in withdrawal_cols if c in df.columns), None)
-            d_col = next((c for c in deposit_cols if c in df.columns), None)
+            w_col = next((c for c in df.columns if any(k in c for k in withdrawal_cols)), None)
+            d_col = next((c for c in df.columns if any(k in c for k in deposit_cols)), None)
 
-            if w_col and pd.notna(row[w_col]) and str(row[w_col]).strip() != "":
-                amount = float(str(row[w_col]).replace(',', ''))
+            if w_col and pd.notna(row[w_col]) and str(row[w_col]).strip().lower() not in ["", "nan", "none"]:
+                amount = clean_amount(row[w_col])
                 txn_type = "DEBIT"
-            elif d_col and pd.notna(row[d_col]) and str(row[d_col]).strip() != "":
-                amount = float(str(row[d_col]).replace(',', ''))
+            elif d_col and pd.notna(row[d_col]) and str(row[d_col]).strip().lower() not in ["", "nan", "none"]:
+                amount = clean_amount(row[d_col])
                 txn_type = "CREDIT"
 
+        # Try to parse and format date consistently
+        try:
+            parsed_date = pd.to_datetime(date_val, dayfirst=True)
+            formatted_date = parsed_date.strftime("%Y-%m-%d")
+        except:
+            formatted_date = date_val
+
         record = {
-            "date": date_val,
+            "date": formatted_date,
             "raw_description": desc_val,
             "amount": amount,
             "type": txn_type

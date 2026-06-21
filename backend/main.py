@@ -49,8 +49,8 @@ app = FastAPI(title="RupeeRadar API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -94,16 +94,12 @@ def process_session_background(session_id: str):
         
         # If there are still transactions that need AI processing
         if batch_input:
-            BATCH_SIZE = 10 # Reduced to 10 to stay under 1K TPM (Tokens Per Minute) limit
+            BATCH_SIZE = 30 # Increased batch size for llama3-8b-8192
             results = []
             for i in range(0, len(batch_input), BATCH_SIZE):
                 batch = batch_input[i:i + BATCH_SIZE]
                 batch_results = categorize_transactions_batch(batch)
                 results.extend(batch_results)
-                
-                # If there are more batches, sleep for 60 seconds to reset the 1K TPM limit
-                if i + BATCH_SIZE < len(batch_input):
-                    time.sleep(62) 
                 
             results_map = {str(r.get("id")): r for r in results if r.get("id")}
         else:
@@ -141,8 +137,6 @@ def process_session_background(session_id: str):
             "spend_by_category": spend_by_category
         }
         
-        # Sleep for 60 seconds to ensure TPM is reset before making the final insight call
-        time.sleep(62)
         insights_list = generate_financial_insights(analytics_data)
         
         for text in insights_list:

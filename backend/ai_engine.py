@@ -66,9 +66,9 @@ def categorize_transactions_batch(transactions: List[Dict[str, Any]]) -> List[Di
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": json.dumps(input_data)}
             ],
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             response_format={"type": "json_object"},
-            temperature=0.1
+            temperature=0.0
         )
         
         content = response.choices[0].message.content
@@ -90,7 +90,7 @@ def generate_financial_insights(analytics_data: Dict[str, Any]) -> List[str]:
                 {"role": "system", "content": INSIGHT_SYSTEM_PROMPT},
                 {"role": "user", "content": json.dumps(analytics_data)}
             ],
-            model="llama-3.3-70b-versatile",
+            model="llama-3.1-8b-instant",
             response_format={"type": "json_object"},
             temperature=0.7
         )
