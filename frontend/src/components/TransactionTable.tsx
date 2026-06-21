@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowUpRight, ArrowDownRight, Repeat, Edit2 } from 'lucide-react';
 import { updateTransactionCategory } from '../api';
+import { getCategoryColor } from '../utils/colors';
 
 interface TransactionTableProps {
   transactions: any[];
@@ -69,7 +70,7 @@ export function TransactionTable({ transactions, onCategoryChanged }: Transactio
                 ) : (
                   <button 
                     onClick={() => setEditingId(txn.id)}
-                    className="group/btn flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-200 shadow-sm hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-all"
+                    className={`group/btn flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border shadow-sm transition-all hover:opacity-80 ${getCategoryColor(txn.category || 'Other').bg} ${getCategoryColor(txn.category || 'Other').text} ${getCategoryColor(txn.category || 'Other').border}`}
                   >
                     {txn.category || 'Other'}
                     <Edit2 className="w-3 h-3 opacity-0 group-hover/btn:opacity-100 transition-opacity" />

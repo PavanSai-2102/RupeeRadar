@@ -3,6 +3,7 @@ import { getSessionAnalytics, getSessionInsights, getSessionTransactions, getGlo
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, Legend, LineChart, Line, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Wallet, TrendingDown, TrendingUp, Sparkles, RefreshCcw, Download } from 'lucide-react';
 import { TransactionTable } from './TransactionTable';
+import { getCategoryColor } from '../utils/colors';
 
 interface DashboardProps {
   sessionId: string;
@@ -138,7 +139,7 @@ export function Dashboard({ sessionId, onReset }: DashboardProps) {
                     dataKey="value"
                   >
                     {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill={getCategoryColor(entry.name).fill} />
                     ))}
                   </Pie>
                   <RechartsTooltip 
